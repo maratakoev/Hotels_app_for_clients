@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hotels_clients_app/qr_scanner.dart';
 import './third_screen.dart';
 import 'styles.dart';
 
@@ -69,10 +68,8 @@ class _ButtonState extends State<Button> {
             shape: WidgetStatePropertyAll(RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(15))))),
         onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const BarcodeScannerSimple()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const ThirdScreen()));
         },
         child: const Text(
           'Хорошо',

@@ -14,31 +14,55 @@ class RegForm extends StatefulWidget {
 class _RegFormState extends State<RegForm> {
   final _formKey = GlobalKey<FormState>();
 
+  // Создаем контроллеры для каждого поля ввода
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController surnameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
+  // Метод для проверки совпадения паролей
+
+  // Освобождаем ресурсы контроллеров при удалении виджета
+  @override
+  void dispose() {
+    super.dispose();
+    nameController.dispose();
+    surnameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(250, 253, 255, 1),
       body: Form(
         key: _formKey,
-        child: ListView(children: const [
+        child: ListView(children: [
           Column(
             children: [
-              SizedBox(height: 87),
-              NameInput(),
-              SizedBox(height: 24),
-              SurnameInput(),
-              SizedBox(height: 24),
-              MailInput(),
-              SizedBox(height: 24),
-              PasswordInput(),
-              SizedBox(height: 24),
-              ConfirmPasswordInput(),
-              SizedBox(height: 24),
-              AuthScreenText(),
-              SizedBox(height: 24),
+              const SizedBox(height: 87),
+              NameInput(controller: nameController),
+              const SizedBox(height: 24),
+              SurnameInput(controller: surnameController),
+              const SizedBox(height: 24),
+              MailInput(controller: emailController),
+              const SizedBox(height: 24),
+              PasswordInput(controller: passwordController),
+              const SizedBox(height: 24),
+              ConfirmPasswordInput(
+                controller: confirmPasswordController,
+                passwordController: passwordController,
+              ),
+              const SizedBox(height: 24),
+              const AuthScreenText(),
+              const SizedBox(height: 24),
               Button(),
-              SizedBox(height: 64),
-              LogInText(),
+              const SizedBox(height: 34),
+              const LogInText(),
             ],
           ),
         ]),
@@ -48,7 +72,8 @@ class _RegFormState extends State<RegForm> {
 }
 
 class NameInput extends StatefulWidget {
-  const NameInput({super.key});
+  final TextEditingController controller;
+  const NameInput({super.key, required this.controller});
 
   @override
   State<NameInput> createState() => _NameInputState();
@@ -71,6 +96,7 @@ class _NameInputState extends State<NameInput> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),
           child: TextFormField(
+            controller: widget.controller,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
               filled: true,
@@ -114,7 +140,8 @@ class _NameInputState extends State<NameInput> {
 }
 
 class SurnameInput extends StatefulWidget {
-  const SurnameInput({super.key});
+  final TextEditingController controller;
+  const SurnameInput({super.key, required this.controller});
 
   @override
   State<SurnameInput> createState() => _SurnameInputState();
@@ -137,6 +164,7 @@ class _SurnameInputState extends State<SurnameInput> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),
           child: TextFormField(
+            controller: widget.controller,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
               filled: true,
@@ -180,7 +208,8 @@ class _SurnameInputState extends State<SurnameInput> {
 }
 
 class MailInput extends StatefulWidget {
-  const MailInput({super.key});
+  final TextEditingController controller;
+  const MailInput({super.key, required this.controller});
 
   @override
   State<MailInput> createState() => _MailInputState();
@@ -218,7 +247,7 @@ class _MailInputState extends State<MailInput> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),
           child: TextFormField(
-            controller: _emailController,
+            controller: widget.controller,
             decoration: InputDecoration(
               filled: true,
               fillColor: const Color.fromRGBO(255, 255, 255, 1),
@@ -264,7 +293,8 @@ class _MailInputState extends State<MailInput> {
 }
 
 class PasswordInput extends StatefulWidget {
-  const PasswordInput({super.key});
+  final TextEditingController controller;
+  const PasswordInput({super.key, required this.controller});
 
   @override
   State<PasswordInput> createState() => _PasswordInputState();
@@ -294,6 +324,7 @@ class _PasswordInputState extends State<PasswordInput> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),
           child: TextFormField(
+            controller: widget.controller,
             obscureText:
                 _obscureText, // Используем переменную для скрытия текста
             decoration: InputDecoration(
@@ -347,24 +378,38 @@ class _PasswordInputState extends State<PasswordInput> {
 }
 
 class ConfirmPasswordInput extends StatefulWidget {
-  const ConfirmPasswordInput({super.key});
+  final TextEditingController passwordController;
+  final TextEditingController controller;
+
+  const ConfirmPasswordInput({
+    super.key,
+    required this.controller,
+    required this.passwordController,
+  });
 
   @override
   State<ConfirmPasswordInput> createState() => _ConfirmPasswordInputState();
 }
 
 class _ConfirmPasswordInputState extends State<ConfirmPasswordInput> {
-  bool _obscureText = true; // Добавлено для переключения видимости пароля
+  bool _obscureText = true; // Для переключения видимости пароля
 
+  // Функция для переключения видимости пароля
   void _togglePasswordVisibility() {
     setState(() {
       _obscureText = !_obscureText;
     });
   }
 
+  // Логика валидации для подтверждения пароля
   String? _validateConfirmPassword(String? value) {
-    // Логика валидации для подтверждения пароля
-    return null;
+    if (value == null || value.isEmpty) {
+      return 'Пожалуйста, подтвердите пароль';
+    } else if (value != widget.passwordController.text) {
+      // Доступ через widget
+      return 'Пароли не совпадают'; // Исправлено сообщение
+    }
+    return null; // Возвращаем null, если валидация прошла успешно
   }
 
   @override
@@ -375,6 +420,7 @@ class _ConfirmPasswordInputState extends State<ConfirmPasswordInput> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),
           child: TextFormField(
+            controller: widget.controller,
             obscureText:
                 _obscureText, // Используем переменную для скрытия текста
             decoration: InputDecoration(
@@ -411,7 +457,6 @@ class _ConfirmPasswordInputState extends State<ConfirmPasswordInput> {
               ),
               hintStyle: dropDownButtonText,
               suffixIcon: IconButton(
-                // Добавлено для переключения видимости пароля
                 icon: Icon(
                   _obscureText ? Icons.visibility : Icons.visibility_off,
                   color: const Color.fromRGBO(180, 180, 180, 1),
@@ -419,7 +464,8 @@ class _ConfirmPasswordInputState extends State<ConfirmPasswordInput> {
                 onPressed: _togglePasswordVisibility,
               ),
             ),
-            validator: _validateConfirmPassword,
+            validator:
+                _validateConfirmPassword, // Используем метод для валидации
           ),
         ),
       ),

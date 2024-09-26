@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'auth_screen_second.dart';
 import 'styles.dart';
+import './repository/api_service.dart';
 
 class RegForm extends StatefulWidget {
   const RegForm({super.key});
@@ -60,7 +61,12 @@ class _RegFormState extends State<RegForm> {
               const SizedBox(height: 24),
               const AuthScreenText(),
               const SizedBox(height: 24),
-              Button(),
+              Button(
+                  firstNameController: nameController,
+                  lastNameController: surnameController,
+                  emailController: emailController,
+                  passwordController: passwordController,
+                  confirmPasswordController: confirmPasswordController),
               const SizedBox(height: 34),
               const LogInText(),
             ],
@@ -515,7 +521,20 @@ class AuthScreenText extends StatelessWidget {
 }
 
 class Button extends StatelessWidget {
-  const Button({super.key});
+  final TextEditingController firstNameController;
+  final TextEditingController lastNameController;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+
+  const Button({
+    super.key,
+    required this.firstNameController,
+    required this.lastNameController,
+    required this.emailController,
+    required this.passwordController,
+    required this.confirmPasswordController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -531,13 +550,41 @@ class Button extends StatelessWidget {
             ),
           ),
         ),
-        onPressed: () {
+        onPressed: () async {
           // Проверяем, если форма валидна
           if (Form.of(context).validate()) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AuthScreenSecond()),
-            );
+            // Создаем экземпляр ApiService
+            final apiService = ApiService();
+
+            // Собираем данные из контроллеров
+            final firstName = firstNameController.text;
+            final lastName = lastNameController.text;
+            final email = emailController.text;
+            final password = passwordController.text;
+            final confirmPassword = confirmPasswordController.text;
+
+            try {
+              // Вызываем метод регистрации
+              await apiService.registerUser(
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                password: password,
+                confirmPassword: confirmPassword,
+                guard: "client",
+              );
+
+              // Переход на другую страницу при успешной регистрации
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LoginForm(),
+                ),
+              );
+            } catch (e) {
+              // Обрабатываем ошибки сети
+              print('Ошибка сети: $e');
+            }
           }
         },
         child: const Text('Зарегистрироваться', style: buttonTextStyle),

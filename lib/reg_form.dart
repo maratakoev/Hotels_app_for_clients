@@ -520,7 +520,7 @@ class AuthScreenText extends StatelessWidget {
   }
 }
 
-class Button extends StatelessWidget {
+class Button extends StatefulWidget {
   final TextEditingController firstNameController;
   final TextEditingController lastNameController;
   final TextEditingController emailController;
@@ -537,6 +537,14 @@ class Button extends StatelessWidget {
   });
 
   @override
+  ButtonState createState() => ButtonState(); // Измените здесь на ButtonState
+}
+
+class ButtonState extends State<Button> {
+  // Измените на ButtonState
+  bool _isLoading = false; // Состояние загрузки
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       width: 325,
@@ -550,46 +558,93 @@ class Button extends StatelessWidget {
             ),
           ),
         ),
-        onPressed: () async {
-          // Проверяем, если форма валидна
-          if (Form.of(context).validate()) {
-            // Создаем экземпляр ApiService
-            final apiService = ApiService();
-
-            // Собираем данные из контроллеров
-            final firstName = firstNameController.text;
-            final lastName = lastNameController.text;
-            final email = emailController.text;
-            final password = passwordController.text;
-            final confirmPassword = confirmPasswordController.text;
-
-            try {
-              // Вызываем метод регистрации
-              await apiService.registerUser(
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-                password: password,
-                confirmPassword: confirmPassword,
-                guard: "client",
-              );
-
-              // Переход на другую страницу при успешной регистрации
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginForm(),
-                ),
-              );
-            } catch (e) {
-              // Обрабатываем ошибки сети
-              print('Ошибка сети: $e');
-            }
-          }
-        },
-        child: const Text('Зарегистрироваться', style: buttonTextStyle),
+        onPressed:
+            _isLoading ? null : _registerUser, // Используем отдельный метод
+        child: _isLoading
+            ? const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              )
+            : const Text('Зарегистрироваться', style: buttonTextStyle),
       ),
     );
+  }
+
+  Future<void> _registerUser() async {
+    if (Form.of(context).validate()) {
+      setState(() {
+        _isLoading = true; // Устанавливаем состояние загрузки
+      });
+
+      final apiService = ApiService();
+      // Собираем данные из контроллеров
+      final firstName = widget.firstNameController.text;
+      final lastName = widget.lastNameController.text;
+      final email = widget.emailController.text;
+      final password = widget.passwordController.text;
+      final confirmPassword = widget.confirmPasswordController.text;
+
+      try {
+        // Отправляем запрос на регистрацию и получаем ответ
+        var response = await apiService.registerUser(
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          password: password,
+          confirmPassword: confirmPassword,
+          guard: "client",
+        );
+
+        // Проверяем, смонтирован ли виджет перед использованием контекста
+        if (!mounted) return;
+
+        // Обрабатываем ответ от сервера
+        if (response.data['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.green,
+              content: Text(
+                response.data['message'],
+                style: buttonTextStyle,
+              ),
+            ),
+          );
+
+          // Задержка на 2 секунды перед переходом на другой экран
+          Future.delayed(const Duration(seconds: 2), () {
+            if (!mounted) return; // Проверка на mounted
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LoginForm(),
+              ),
+            );
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.red,
+              content: Text(
+                response.data['error'],
+                style: buttonTextStyle,
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        // Проверка на mounted перед использованием контекста
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              backgroundColor: Colors.red, content: Text('Ошибка сети: $e')),
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false; // Сбрасываем состояние загрузки
+          });
+        }
+      }
+    }
   }
 }
 

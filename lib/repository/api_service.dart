@@ -4,7 +4,7 @@ class ApiService {
   final Dio _dio = Dio(); // Инициализация Dio
 
   // Метод для регистрации пользователя
-  Future<void> registerUser({
+  Future<Response> registerUser({
     required String firstName,
     required String lastName,
     required String email,
@@ -26,22 +26,15 @@ class ApiService {
         'guard': guard,
       };
 
-      // Отправка POST-запроса с данными
-      final Response response = await _dio.post(
-        registerUrl,
-        data: registrationData,
-      );
+      // Отправка POST-запроса с данными и возврат ответа
+      final Response response =
+          await _dio.post(registerUrl, data: registrationData);
 
-      // Проверка успешности запроса
-      if (response.statusCode == 200) {
-        print('Регистрация успешна');
-        print(
-            'Ответ сервера: ${response.data}'); // Вывод полного ответа сервера
-      } else {
-        print('Ошибка регистрации: ${response.data}');
-      }
+      // Возвращаем ответ для обработки в вызывающем коде
+      return response;
     } catch (e) {
       print('Произошла ошибка: $e');
+      rethrow; // Пробрасываем ошибку дальше, чтобы её можно было обработать в вызывающем коде
     }
   }
 }

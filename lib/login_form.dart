@@ -3,6 +3,7 @@ import 'package:hotels_clients_app/reg_form.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'styles.dart';
+import './repository/api_service.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -38,7 +39,10 @@ class _LoginFormState extends State<LoginForm> {
                   const SizedBox(height: 24),
                   PasswordInput(controller: passwordController),
                   const SizedBox(height: 24),
-                  const ButtonIn(),
+                  ButtonIn(
+                    emailController: emailController,
+                    passwordController: passwordController,
+                  ),
                   const SizedBox(height: 64),
                   const RegFormText(),
                 ],
@@ -241,7 +245,7 @@ class RegFormText extends StatelessWidget {
           children: [
             const TextSpan(text: 'Для регистрации нового личного кабинета'),
             TextSpan(
-                text: ' нажмите сюда',
+                text: ' нажмите сюда.',
                 style: const TextStyle(
                   color: Color.fromRGBO(27, 194, 122, 1),
                 ),
@@ -259,8 +263,23 @@ class RegFormText extends StatelessWidget {
   }
 }
 
-class ButtonIn extends StatelessWidget {
-  const ButtonIn({super.key});
+class ButtonIn extends StatefulWidget {
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+
+  const ButtonIn(
+      {super.key,
+      required this.emailController,
+      required this.passwordController});
+
+  @override
+  State<ButtonIn> createState() => ButtonInState();
+}
+
+class ButtonInState extends State<ButtonIn> {
+  final ApiService _apiService = ApiService(); // Создайте экземпляр ApiService
+  final TokenStorage _tokenStorage =
+      TokenStorage(); // Создаем экземпляр TokenStorage
 
   @override
   Widget build(BuildContext context) {
@@ -276,13 +295,50 @@ class ButtonIn extends StatelessWidget {
             ),
           ),
         ),
-        onPressed: () {
+        onPressed: () async {
           // Проверяем, если форма валидна
           if (Form.of(context).validate()) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AuthScreenSecond()),
-            );
+            String email = widget.emailController.text;
+            String password = widget.passwordController.text;
+
+            try {
+              final response =
+                  await _apiService.loginUser(email: email, password: password);
+
+              // Проверяем, успешен ли ответ от сервера
+              if (response.data['success'] == true) {
+                // Сохраняем токен в безопасное хранилище
+                final token = response.data['token'];
+                await _tokenStorage.saveToken(token);
+                // Выводим токен в консоль
+                await TokenStorage().printToken();
+
+                // Переходим на следующий экран
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const AuthScreenSecond()),
+                );
+              } else {
+                // Если не успешный, показываем сообщение об ошибке
+                String errorMessage =
+                    response.data['error'] ?? 'Неизвестная ошибка';
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      backgroundColor: Colors.red,
+                      content: Text(
+                          style: buttonTextStyle, 'Ошибка: $errorMessage')),
+                );
+              }
+            } catch (e) {
+              // Обработка ошибки, если она возникла
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    backgroundColor: Colors.red,
+                    content: Text(
+                        style: buttonTextStyle, 'Ошибка: ${e.toString()}')),
+              );
+            }
           }
         },
         child: const Text('Войти', style: buttonTextStyle),

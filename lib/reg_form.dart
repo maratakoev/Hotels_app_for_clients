@@ -1,7 +1,6 @@
 import './login_form.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'auth_screen_second.dart';
 import 'styles.dart';
 import './repository/api_service.dart';
 
@@ -635,7 +634,8 @@ class ButtonState extends State<Button> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              backgroundColor: Colors.red, content: Text('Ошибка сети: $e')),
+              backgroundColor: Colors.red,
+              content: Text(style: buttonTextStyle, 'Ошибка сети: $e')),
         );
       } finally {
         if (mounted) {
@@ -668,9 +668,9 @@ class LogInText extends StatelessWidget {
             color: Color.fromRGBO(59, 59, 59, 1),
           ),
           children: [
-            const TextSpan(text: 'Для входа в существующий личный кабинет'),
+            const TextSpan(text: 'Уже есть аккаунт?'),
             TextSpan(
-                text: ' нажмите сюда',
+                text: ' \n Нажмите сюда!',
                 style: const TextStyle(
                   color: Color.fromRGBO(27, 194, 122, 1),
                 ),
